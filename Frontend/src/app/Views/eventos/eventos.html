@@ -1,1 +1,14 @@
-<p>eventos works!</p>
+<section class="page-heading">
+  <p class="eyebrow">AGENDA DEL EQUIPO</p>
+  <h1>Eventos</h1>
+  <p>Actividades para compartir y jugar en comunidad.</p>
+</section>
+<div class="cards">
+  @for (event of events; track event.name) {
+    <article class="info-card">
+      <p class="date">{{ event.date }}</p>
+      <h2>{{ event.name }}</h2>
+      <p>{{ event.details }}</p>
+    </article>
+  }
+</div>

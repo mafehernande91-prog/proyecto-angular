@@ -1,0 +1,45 @@
+.page-heading {
+  color: #211a31;
+}
+
+.page-heading p:last-child,
+.product-card p {
+  color: #716b7c;
+}
+
+.eyebrow {
+  color: #6d28d9;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0.3rem 0;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.product-card {
+  padding: 1.25rem;
+  border: 1px solid #e9e5f5;
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.product-icon {
+  font-size: 2rem;
+}
+
+.product-card h2 {
+  margin-bottom: 0.5rem;
+  font-size: 1.15rem;
+}
+
+.product-card strong {
+  color: #6d28d9;
+}

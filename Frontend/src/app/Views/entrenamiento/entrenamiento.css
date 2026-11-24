@@ -1,0 +1,36 @@
+.page-heading {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.4rem;
+  color: #6d28d9;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+h1 {
+  margin: 0;
+  color: #211a31;
+}
+
+.page-heading p:last-child,
+.empty-message {
+  color: #716b7c;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e9e5f5;
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+table {
+  width: 100%;
+  min-width: 640px;
+}
+
+.error-message {
+  color: #b42318;
+}

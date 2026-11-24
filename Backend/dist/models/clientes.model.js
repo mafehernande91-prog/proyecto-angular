@@ -7,28 +7,26 @@ class ClienteModel {
         return clientes_config_1.clientesDB;
     }
     static async obtenerPorId(id) {
-        return clientes_config_1.clientesDB.find((cliente) => cliente.id === id) || null;
+        return clientes_config_1.clientesDB.find((cliente) => cliente.id === id) ?? null;
     }
     static async crear(cliente) {
         const nuevoCliente = {
             ...cliente,
             id: (0, clientes_config_1.obtenerSiguienteId)(),
-            fecha_creacion: new Date()
+            fecha_creacion: new Date(),
         };
         clientes_config_1.clientesDB.push(nuevoCliente);
         return nuevoCliente;
     }
     static async actualizar(id, cliente) {
-        const index = clientes_config_1.clientesDB.findIndex((clienteActual) => {
-            return clienteActual.id === id;
-        });
+        const index = clientes_config_1.clientesDB.findIndex((item) => item.id === id);
         if (index === -1) {
             return null;
         }
         const clienteActualizado = {
             ...clientes_config_1.clientesDB[index],
             ...cliente,
-            id
+            id,
         };
         clientes_config_1.clientesDB[index] = clienteActualizado;
         return clienteActualizado;

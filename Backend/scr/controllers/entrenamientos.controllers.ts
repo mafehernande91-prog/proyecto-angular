@@ -1,172 +1,159 @@
 import { Request, Response } from 'express';
+import {
+  ActualizacionEntrenamiento,
+  EntrenamientoModel,
+  NuevoEntrenamiento,
+} from '../models/entrenamientos.model';
+import { isRecord, parseId } from '../utils/http';
 
-import { EntrenamientoModel } from '../models/entrenamientos.model';
+type EntrenamientoCampos = ActualizacionEntrenamiento;
+type ResultadoValidacion =
+  | { valido: true; datos: EntrenamientoCampos }
+  | { valido: false; error: string };
 
-const validarEntrenamiento = (datos: any, parcial: boolean): string | null => {
-
-  const { nombre, descripcion, fecha, duracion_minutos } = datos ?? {};
-
-  if (!parcial && !nombre) {
-    return 'nombre es obligatorio';
+function validarEntrenamiento(body: unknown, parcial: boolean): ResultadoValidacion {
+  if (!isRecord(body)) {
+    return { valido: false, error: 'El cuerpo de la solicitud debe ser un objeto.' };
   }
 
-  if (nombre !== undefined && (typeof nombre !== 'string' || !nombre.trim())) {
-    return 'nombre no es valido';
+  const datos: EntrenamientoCampos = {};
+
+  if (body['nombre'] !== undefined) {
+    if (typeof body['nombre'] !== 'string' || !body['nombre'].trim()) {
+      return { valido: false, error: 'nombre debe ser un texto no vacío.' };
+    }
+    datos.nombre = body['nombre'].trim();
   }
 
-  if (descripcion !== undefined && typeof descripcion !== 'string') {
-    return 'descripcion no es valida';
+  if (!parcial && !datos.nombre) {
+    return { valido: false, error: 'nombre es obligatorio.' };
   }
 
-  if (fecha !== undefined && (typeof fecha !== 'string' || isNaN(Date.parse(fecha)))) {
-    return 'fecha no es valida';
+  if (body['descripcion'] !== undefined) {
+    if (typeof body['descripcion'] !== 'string') {
+      return { valido: false, error: 'descripcion debe ser un texto.' };
+    }
+    datos.descripcion = body['descripcion'].trim();
   }
 
-  if (duracion_minutos !== undefined && (typeof duracion_minutos !== 'number' || duracion_minutos <= 0)) {
-    return 'duracion_minutos debe ser un numero mayor a 0';
+  if (body['fecha'] !== undefined) {
+    if (
+      typeof body['fecha'] !== 'string' ||
+      !body['fecha'].trim() ||
+      Number.isNaN(Date.parse(body['fecha']))
+    ) {
+      return { valido: false, error: 'fecha debe ser una fecha válida.' };
+    }
+    datos.fecha = body['fecha'].trim();
   }
 
-  return null;
-};
+  if (body['duracion_minutos'] !== undefined) {
+    const duracion = body['duracion_minutos'];
+    if (typeof duracion !== 'number' || !Number.isFinite(duracion) || duracion <= 0) {
+      return { valido: false, error: 'duracion_minutos debe ser un número mayor a 0.' };
+    }
+    datos.duracion_minutos = duracion;
+  }
 
-const seleccionarCampos = (datos: any) => {
+  if (parcial && Object.keys(datos).length === 0) {
+    return { valido: false, error: 'Incluye al menos un campo para actualizar.' };
+  }
 
-  const { nombre, descripcion, fecha, duracion_minutos } = datos ?? {};
+  return { valido: true, datos };
+}
 
-  return Object.fromEntries(
-    Object.entries({ nombre, descripcion, fecha, duracion_minutos })
-      .filter(([, valor]) => valor !== undefined)
-  ) as any;
-};
+export async function obtenerEntrenamientos(_req: Request, res: Response): Promise<void> {
+  res.json(await EntrenamientoModel.obtenerTodos());
+}
 
-export const obtenerEntrenamientos = async (req: Request, res: Response) => {
-
-  const entrenamientos = await EntrenamientoModel.obtenerTodos();
-
-  res.json(entrenamientos);
-
-};
-
-export const obtenerEntrenamientoPorId = async (req: Request, res: Response) => {
-
-  const id = Number(req.params.id);
+export async function obtenerEntrenamientoPorId(req: Request, res: Response): Promise<void> {
+  const id = parseId(req.params['id']);
+  if (id === null) {
+    res.status(400).json({ message: 'El id debe ser un entero positivo.' });
+    return;
+  }
 
   const entrenamiento = await EntrenamientoModel.obtenerPorId(id);
-
   if (!entrenamiento) {
-
-    return res.status(404).json({
-
-      message: 'Entrenamiento no encontrado'
-
-    });
-
+    res.status(404).json({ message: 'Entrenamiento no encontrado.' });
+    return;
   }
 
   res.json(entrenamiento);
+}
 
-};
-
-export const crearEntrenamiento = async (req: Request, res: Response) => {
-
-  const error = validarEntrenamiento(req.body, false);
-
-  if (error) {
-
-    return res.status(400).json({
-
-      message: error
-
-    });
-
+export async function crearEntrenamiento(req: Request, res: Response): Promise<void> {
+  const resultado = validarEntrenamiento(req.body, false);
+  if (!resultado.valido) {
+    res.status(400).json({ message: resultado.error });
+    return;
   }
 
-  const entrenamiento = await EntrenamientoModel.crear(seleccionarCampos(req.body));
-
-  res.status(201).json(entrenamiento);
-
-};
-
-export const actualizarEntrenamiento = async (req: Request, res: Response) => {
-
-  const id = Number(req.params.id);
-
-  const error = validarEntrenamiento(req.body, false);
-
-  if (error) {
-
-    return res.status(400).json({
-
-      message: error
-
-    });
-
+  const nombre = resultado.datos.nombre;
+  if (!nombre) {
+    res.status(400).json({ message: 'nombre es obligatorio.' });
+    return;
   }
 
-  const entrenamiento = await EntrenamientoModel.actualizar(id, seleccionarCampos(req.body));
+  const nuevoEntrenamiento: NuevoEntrenamiento = { ...resultado.datos, nombre };
+  res.status(201).json(await EntrenamientoModel.crear(nuevoEntrenamiento));
+}
 
+export async function actualizarEntrenamiento(req: Request, res: Response): Promise<void> {
+  const id = parseId(req.params['id']);
+  if (id === null) {
+    res.status(400).json({ message: 'El id debe ser un entero positivo.' });
+    return;
+  }
+
+  const resultado = validarEntrenamiento(req.body, false);
+  if (!resultado.valido) {
+    res.status(400).json({ message: resultado.error });
+    return;
+  }
+
+  const entrenamiento = await EntrenamientoModel.actualizar(id, resultado.datos);
   if (!entrenamiento) {
-
-    return res.status(404).json({
-
-      message: 'Entrenamiento no encontrado'
-
-    });
-
+    res.status(404).json({ message: 'Entrenamiento no encontrado.' });
+    return;
   }
 
   res.json(entrenamiento);
+}
 
-};
-
-export const actualizarParcialEntrenamiento = async (req: Request, res: Response) => {
-
-  const id = Number(req.params.id);
-
-  const error = validarEntrenamiento(req.body, true);
-
-  if (error) {
-
-    return res.status(400).json({
-
-      message: error
-
-    });
-
+export async function actualizarParcialEntrenamiento(req: Request, res: Response): Promise<void> {
+  const id = parseId(req.params['id']);
+  if (id === null) {
+    res.status(400).json({ message: 'El id debe ser un entero positivo.' });
+    return;
   }
 
-  const entrenamiento = await EntrenamientoModel.actualizar(id, seleccionarCampos(req.body));
+  const resultado = validarEntrenamiento(req.body, true);
+  if (!resultado.valido) {
+    res.status(400).json({ message: resultado.error });
+    return;
+  }
 
+  const entrenamiento = await EntrenamientoModel.actualizar(id, resultado.datos);
   if (!entrenamiento) {
-
-    return res.status(404).json({
-
-      message: 'Entrenamiento no encontrado'
-
-    });
-
+    res.status(404).json({ message: 'Entrenamiento no encontrado.' });
+    return;
   }
 
   res.json(entrenamiento);
+}
 
-};
+export async function eliminarEntrenamiento(req: Request, res: Response): Promise<void> {
+  const id = parseId(req.params['id']);
+  if (id === null) {
+    res.status(400).json({ message: 'El id debe ser un entero positivo.' });
+    return;
+  }
 
-export const eliminarEntrenamiento = async (req: Request, res: Response) => {
-
-  const id = Number(req.params.id);
-
-  const eliminado = await EntrenamientoModel.eliminar(id);
-
-  if (!eliminado) {
-
-    return res.status(404).json({
-
-      message: 'Entrenamiento no encontrado'
-
-    });
-
+  if (!(await EntrenamientoModel.eliminar(id))) {
+    res.status(404).json({ message: 'Entrenamiento no encontrado.' });
+    return;
   }
 
   res.status(204).send();
-
-};
+}

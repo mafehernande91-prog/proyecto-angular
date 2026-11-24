@@ -1,17 +1,43 @@
 .sidenav-container {
-  height: 100%;
+  min-height: 100vh;
 }
 
 .sidenav {
-  width: 200px;
+  width: 240px;
 }
 
-.sidenav .mat-toolbar {
-  background: inherit;
-}
-
-.mat-toolbar.mat-primary {
+.topbar {
   position: sticky;
   top: 0;
   z-index: 1;
+  background: #6d28d9;
+  color: #fff;
+}
+
+.brand {
+  font-weight: 700;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.user-name {
+  margin-right: 1rem;
+}
+
+.page-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+@media (max-width: 600px) {
+  .page-content {
+    padding: 1rem;
+  }
+
+  .user-name {
+    display: none;
+  }
 }

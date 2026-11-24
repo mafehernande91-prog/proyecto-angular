@@ -1,59 +1,32 @@
-# Voley
+# Vóley
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
+Aplicación sencilla para consultar ejercicios, eventos, artículos deportivos y entrenamientos de voleibol. Está organizada en vistas, servicios y rutas de Angular, siguiendo la estructura del repositorio de referencia.
 
-## Development server
+## Iniciar el proyecto
 
-To start a local development server, run:
+Abre dos terminales desde la carpeta del proyecto:
 
-```bash
-ng serve
+```powershell
+cd Backend
+npm run dev
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```powershell
+cd Frontend
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Abre `http://localhost:4200`. El backend expone los entrenamientos en `http://localhost:3000/api/v1/entrenamientos`.
+Los registros de clientes y entrenamientos del backend se guardan en memoria y se reinician al apagarlo. Para permitir otro origen del frontend, define `FRONT_URL` en `Backend/.env`.
 
-```bash
-ng generate --help
-```
+## Acceso de demostración
 
-## Building
+En la pantalla de acceso puedes crear una cuenta y luego iniciar sesión. Las cuentas y la sesión se guardan en el `localStorage` del navegador; la contraseña se almacena como hash derivado, no como texto.
 
-To build the project run:
+Este acceso local es solo para una demostración o proyecto académico. No reemplaza una autenticación real: los datos pueden ser modificados o borrados desde el navegador. Para producción, la autenticación y las cuentas deben validarse en el servidor.
 
-```bash
-ng build
-```
+## Comandos
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Desde `Frontend`: `npm run build` para compilar y `npm test -- --watch=false` para ejecutar pruebas.
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Desde `Backend`: `npm run build` para compilar y `npm test` para compilar y probar la API.

@@ -1,146 +1,139 @@
 import { Request, Response } from 'express';
+import { ActualizacionCliente, ClienteModel, NuevoCliente } from '../models/clientes.model';
+import { isRecord, parseId } from '../utils/http';
 
-import { ClienteModel } from '../models/clientes.model';
+type ClienteCampos = ActualizacionCliente;
+type ResultadoValidacion =
+  | { valido: true; datos: ClienteCampos }
+  | { valido: false; error: string };
 
-const validarCliente = (datos: any, parcial: boolean): string | null => {
-
-  const { nombre, apellido, edad, sexo, email } = datos ?? {};
-
-  if (!parcial && (!nombre || !apellido || !email)) {
-    return 'nombre, apellido y email son obligatorios';
+function validarCliente(body: unknown, parcial: boolean): ResultadoValidacion {
+  if (!isRecord(body)) {
+    return { valido: false, error: 'El cuerpo de la solicitud debe ser un objeto.' };
   }
 
-  if (nombre !== undefined && (typeof nombre !== 'string' || !nombre.trim())) {
-    return 'nombre no es valido';
+  const datos: ClienteCampos = {};
+
+  if (body['nombre'] !== undefined) {
+    if (typeof body['nombre'] !== 'string' || !body['nombre'].trim()) {
+      return { valido: false, error: 'nombre debe ser un texto no vacío.' };
+    }
+    datos.nombre = body['nombre'].trim();
   }
 
-  if (apellido !== undefined && (typeof apellido !== 'string' || !apellido.trim())) {
-    return 'apellido no es valido';
+  if (body['apellido'] !== undefined) {
+    if (typeof body['apellido'] !== 'string' || !body['apellido'].trim()) {
+      return { valido: false, error: 'apellido debe ser un texto no vacío.' };
+    }
+    datos.apellido = body['apellido'].trim();
   }
 
-  if (email !== undefined && (typeof email !== 'string' || !email.includes('@'))) {
-    return 'email no es valido';
+  if (body['email'] !== undefined) {
+    if (
+      typeof body['email'] !== 'string' ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body['email'].trim())
+    ) {
+      return { valido: false, error: 'email debe ser una dirección válida.' };
+    }
+    datos.email = body['email'].trim().toLowerCase();
   }
 
-  if (edad !== undefined && (typeof edad !== 'number' || edad <= 0)) {
-    return 'edad debe ser un numero mayor a 0';
+  if (!parcial && (!datos.nombre || !datos.apellido || !datos.email)) {
+    return { valido: false, error: 'nombre, apellido y email son obligatorios.' };
   }
 
-  if (sexo !== undefined && typeof sexo !== 'string') {
-    return 'sexo no es valido';
+  if (body['edad'] !== undefined) {
+    const edad = body['edad'];
+    if (typeof edad !== 'number' || !Number.isInteger(edad) || edad <= 0) {
+      return { valido: false, error: 'edad debe ser un entero mayor a 0.' };
+    }
+    datos.edad = edad;
   }
 
-  return null;
-};
+  if (body['sexo'] !== undefined) {
+    if (typeof body['sexo'] !== 'string') {
+      return { valido: false, error: 'sexo debe ser un texto.' };
+    }
+    datos.sexo = body['sexo'].trim();
+  }
 
-const seleccionarCampos = (datos: any) => {
+  if (parcial && Object.keys(datos).length === 0) {
+    return { valido: false, error: 'Incluye al menos un campo para actualizar.' };
+  }
 
-  const { nombre, apellido, edad, sexo, email } = datos ?? {};
+  return { valido: true, datos };
+}
 
-  return Object.fromEntries(
-    Object.entries({ nombre, apellido, edad, sexo, email })
-      .filter(([, valor]) => valor !== undefined)
-  ) as any;
-};
- 
-export const obtenerClientes = async (req: Request, res: Response) => {
+export async function obtenerClientes(_req: Request, res: Response): Promise<void> {
+  res.json(await ClienteModel.obtenerTodos());
+}
 
-  const clientes = await ClienteModel.obtenerTodos();
- 
-  res.json(clientes);
+export async function obtenerClientePorId(req: Request, res: Response): Promise<void> {
+  const id = parseId(req.params['id']);
+  if (id === null) {
+    res.status(400).json({ message: 'El id debe ser un entero positivo.' });
+    return;
+  }
 
-};
- 
-export const obtenerClientePorId = async (req: Request, res: Response) => {
-
-  const id = Number(req.params.id);
- 
   const cliente = await ClienteModel.obtenerPorId(id);
- 
   if (!cliente) {
-
-    return res.status(404).json({
-
-      message: 'Cliente no encontrado'
-
-    });
-
+    res.status(404).json({ message: 'Cliente no encontrado.' });
+    return;
   }
- 
+
   res.json(cliente);
+}
 
-};
- 
-export const crearCliente = async (req: Request, res: Response) => {
-
-  const error = validarCliente(req.body, false);
- 
-  if (error) {
-
-    return res.status(400).json({
-
-      message: error
-
-    });
-
+export async function crearCliente(req: Request, res: Response): Promise<void> {
+  const resultado = validarCliente(req.body, false);
+  if (!resultado.valido) {
+    res.status(400).json({ message: resultado.error });
+    return;
   }
- 
-  const cliente = await ClienteModel.crear(seleccionarCampos(req.body));
- 
-  res.status(201).json(cliente);
 
-};
- 
-export const actualizarCliente = async (req: Request, res: Response) => {
-
-  const id = Number(req.params.id);
- 
-  const error = validarCliente(req.body, true);
- 
-  if (error) {
-
-    return res.status(400).json({
-
-      message: error
-
-    });
-
+  const { nombre, apellido, email } = resultado.datos;
+  if (!nombre || !apellido || !email) {
+    res.status(400).json({ message: 'nombre, apellido y email son obligatorios.' });
+    return;
   }
- 
-  const cliente = await ClienteModel.actualizar(id, seleccionarCampos(req.body));
- 
+
+  const nuevoCliente: NuevoCliente = { ...resultado.datos, nombre, apellido, email };
+  res.status(201).json(await ClienteModel.crear(nuevoCliente));
+}
+
+export async function actualizarCliente(req: Request, res: Response): Promise<void> {
+  const id = parseId(req.params['id']);
+  if (id === null) {
+    res.status(400).json({ message: 'El id debe ser un entero positivo.' });
+    return;
+  }
+
+  const resultado = validarCliente(req.body, true);
+  if (!resultado.valido) {
+    res.status(400).json({ message: resultado.error });
+    return;
+  }
+
+  const cliente = await ClienteModel.actualizar(id, resultado.datos);
   if (!cliente) {
-
-    return res.status(404).json({
-
-      message: 'Cliente no encontrado'
-
-    });
-
+    res.status(404).json({ message: 'Cliente no encontrado.' });
+    return;
   }
- 
+
   res.json(cliente);
+}
 
-};
- 
-export const eliminarCliente = async (req: Request, res: Response) => {
-
-  const id = Number(req.params.id);
- 
-  const eliminado = await ClienteModel.eliminar(id);
- 
-  if (!eliminado) {
-
-    return res.status(404).json({
-
-      message: 'Cliente no encontrado'
-
-    });
-
+export async function eliminarCliente(req: Request, res: Response): Promise<void> {
+  const id = parseId(req.params['id']);
+  if (id === null) {
+    res.status(400).json({ message: 'El id debe ser un entero positivo.' });
+    return;
   }
- 
+
+  if (!(await ClienteModel.eliminar(id))) {
+    res.status(404).json({ message: 'Cliente no encontrado.' });
+    return;
+  }
+
   res.status(204).send();
-
-};
-
- 
+}

@@ -1,29 +1,26 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
-import { MatTableModule, MatTable } from '@angular/material/table';
-import { MatPaginatorModule, MatPaginator } from '@angular/material/paginator';
-import { MatSortModule, MatSort } from '@angular/material/sort';
-import { TableDataSource, TableItem } from './table-datasource';
+import { Component } from '@angular/core';
+import { MatTableModule } from '@angular/material/table';
+
+interface Exercise {
+  id: number;
+  name: string;
+  focus: string;
+  duration: number;
+}
 
 @Component({
   selector: 'app-table',
   templateUrl: './table.component.html',
   styleUrl: './table.component.css',
-  imports: [MatTableModule, MatPaginatorModule, MatSortModule],
+  imports: [MatTableModule],
 })
-export class TableComponent implements AfterViewInit {
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatTable) table!: MatTable<TableItem>;
-  dataSource = new TableDataSource();
+export class TableComponent {
+  readonly exercises: Exercise[] = [
+    { id: 1, name: 'Saque por zonas', focus: 'Saque y precisión', duration: 15 },
+    { id: 2, name: 'Recepción en parejas', focus: 'Recepción y control', duration: 20 },
+    { id: 3, name: 'Remate con colocación', focus: 'Ataque y coordinación', duration: 20 },
+    { id: 4, name: 'Bloqueo y cobertura', focus: 'Defensa en la red', duration: 15 },
+  ];
 
-
-
-  /** Columns displayed in the table. Columns IDs can be added, removed, or reordered. */
-  displayedColumns = ['id', 'name'];
-  
-  ngAfterViewInit(): void {
-    this.dataSource.sort = this.sort;
-    this.dataSource.paginator = this.paginator;
-    this.table.dataSource = this.dataSource;
-  }
+  readonly displayedColumns = ['id', 'name', 'focus', 'duration'];
 }

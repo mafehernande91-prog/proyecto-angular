@@ -1,7 +1,7 @@
 @let isHandset = this.isHandset();
 
-<mat-sidenav-container  class="sidenav-container">
-  <mat-sidenav 
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav
     #drawer
     class="sidenav"
     fixedInViewport
@@ -9,24 +9,30 @@
     [mode]="isHandset ? 'over' : 'side'"
     [opened]="isHandset === false"
   >
-    <mat-toolbar >Menu</mat-toolbar>
+    <mat-toolbar>Vóley</mat-toolbar>
     <mat-nav-list>
-      <a mat-list-item routerLink="/ejercicios">Ejercicios</a>
-      <a mat-list-item routerLink="/eventos">Eventos</a>
-      <a mat-list-item routerLink="/ropa">Ropa</a>
-      <a mat-list-item routerLink="/entrenamiento">Entrenamiento</a>
-      
+      <a mat-list-item routerLink="/ejercicios" (click)="isHandset && drawer.close()">Ejercicios</a>
+      <a mat-list-item routerLink="/eventos" (click)="isHandset && drawer.close()">Eventos</a>
+      <a mat-list-item routerLink="/ropa" (click)="isHandset && drawer.close()">Tienda</a>
+      <a mat-list-item routerLink="/entrenamiento" (click)="isHandset && drawer.close()">Entrenamientos</a>
     </mat-nav-list>
   </mat-sidenav>
-  <mat-sidenav-content >
-    <mat-toolbar style="background-color: rgb(219, 148, 225);">
+  <mat-sidenav-content>
+    <mat-toolbar class="topbar">
       @if (isHandset) {
         <button type="button" aria-label="Toggle sidenav" matIconButton (click)="drawer.toggle()">
-          <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
+          <mat-icon>menu</mat-icon>
         </button>
       }
-      <span>voleibol</span>
-    </mat-toolbar> 
-    <router-outlet></router-outlet>
+      <span class="brand">Vóley</span>
+      <span class="toolbar-spacer"></span>
+      @if (auth.currentUser(); as user) {
+        <span class="user-name">{{ user.name }}</span>
+      }
+      <button mat-button type="button" (click)="logout()">Cerrar sesión</button>
+    </mat-toolbar>
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
   </mat-sidenav-content>
 </mat-sidenav-container>

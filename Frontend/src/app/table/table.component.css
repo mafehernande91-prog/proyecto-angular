@@ -1,3 +1,14 @@
 .full-width-table {
   width: 100%;
 }
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e9e5f5;
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+table {
+  width: 100%;
+  min-width: 520px;
+}

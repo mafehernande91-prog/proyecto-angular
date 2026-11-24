@@ -1,1 +1,15 @@
-<p>ropa works!</p>
+<section class="page-heading">
+  <p class="eyebrow">EQUÍPATE PARA JUGAR</p>
+  <h1>Tienda deportiva</h1>
+  <p>Artículos básicos para tus entrenamientos de voleibol.</p>
+</section>
+<div class="product-grid">
+  @for (product of products; track product.name) {
+    <article class="product-card">
+      <div class="product-icon" aria-hidden="true">🏐</div>
+      <h2>{{ product.name }}</h2>
+      <p>{{ product.description }}</p>
+      <strong>{{ product.price }}</strong>
+    </article>
+  }
+</div>
