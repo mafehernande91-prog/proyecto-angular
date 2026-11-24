@@ -1,32 +1,88 @@
 # Vóley
 
-Aplicación sencilla para consultar ejercicios, eventos, artículos deportivos y entrenamientos de voleibol. Está organizada en vistas, servicios y rutas de Angular, siguiendo la estructura del repositorio de referencia.
+Aplicación web sencilla para un equipo de voleibol. El frontend está hecho con Angular y el backend con Node.js, Express y TypeScript.
 
-## Iniciar el proyecto
+## Estructura
+
+```text
+proyecto angular/
+├── Backend/                 API REST
+│   └── scr/
+│       ├── config/          Datos iniciales en memoria
+│       ├── controllers/     Validación y lógica de las peticiones
+│       ├── models/          Operaciones de clientes y entrenamientos
+│       ├── routers/         Rutas de la API
+│       ├── utils/           Utilidades HTTP
+│       ├── app.ts           Configuración de Express, CORS y rutas
+│       └── server.ts        Inicio del servidor
+└── Frontend/                Aplicación Angular
+    └── src/app/
+        ├── Components/      Menú y ejercicios
+        ├── Services/        Acceso a la API y sesión local
+        ├── Views/           Login, ejercicios, eventos, ropa y entrenamientos
+        └── app.routes.ts    Rutas de la aplicación
+```
+
+## Correr en local
 
 Abre dos terminales desde la carpeta del proyecto:
 
 ```powershell
+# Backend
 cd Backend
+npm install
 npm run dev
 ```
 
 ```powershell
+# Frontend
 cd Frontend
-npm start
+npm install
+npx ng serve
 ```
 
-Abre `http://localhost:4200`. El backend expone los entrenamientos en `http://localhost:3000/api/v1/entrenamientos`.
-Los registros de clientes y entrenamientos del backend se guardan en memoria y se reinician al apagarlo. Para permitir otro origen del frontend, define `FRONT_URL` en `Backend/.env`.
+Abre `http://localhost:4200`. El backend queda disponible en `http://localhost:3000`.
 
-## Acceso de demostración
+Para probar la versión de producción localmente, ejecuta `npm run build` y después `npm start`.
 
-En la pantalla de acceso puedes crear una cuenta y luego iniciar sesión. Las cuentas y la sesión se guardan en el `localStorage` del navegador; la contraseña se almacena como hash derivado, no como texto.
+## Funcionalidades
 
-Este acceso local es solo para una demostración o proyecto académico. No reemplaza una autenticación real: los datos pueden ser modificados o borrados desde el navegador. Para producción, la autenticación y las cuentas deben validarse en el servidor.
+- Inicio de sesión y registro de demostración en el navegador.
+- Consulta de ejercicios, eventos y artículos deportivos.
+- Consulta y administración de entrenamientos mediante la API.
+- API CRUD de clientes.
 
-## Comandos
+Los ejercicios, eventos, artículos y cuentas de acceso son datos locales de demostración. Clientes y entrenamientos se guardan en memoria en el backend; los cambios se pierden al reiniciar el servidor. El proyecto no está conectado actualmente a PostgreSQL ni tiene URLs de Railway configuradas.
 
-Desde `Frontend`: `npm run build` para compilar y `npm test -- --watch=false` para ejecutar pruebas.
+## Scripts
 
-Desde `Backend`: `npm run build` para compilar y `npm test` para compilar y probar la API.
+| Carpeta | Script | Qué hace |
+| --- | --- | --- |
+| `Backend` | `npm run dev` | Inicia la API con recarga automática |
+| `Backend` | `npm run build` | Compila TypeScript en `dist/` |
+| `Backend` | `npm start` | Ejecuta la API compilada |
+| `Backend` | `npm test` | Compila y ejecuta las pruebas disponibles |
+| `Frontend` | `npx ng serve` | Inicia el servidor de desarrollo de Angular |
+| `Frontend` | `npm run build` | Genera la compilación de producción |
+| `Frontend` | `npm start` | Sirve la compilación SSR de producción |
+| `Frontend` | `npm test -- --watch=false` | Ejecuta las pruebas de Angular |
+
+## Despliegue del frontend en Railway
+
+Configura el servicio con **Root Directory** `/Frontend`. Railpack puede detectar Angular desde allí; no se necesita un `railway.json` adicional. El comando de build es `npm run build` y el de inicio es `npm start`. El servidor SSR usa `PORT` de Railway y escucha en `0.0.0.0` (con puerto `4200` como valor local predeterminado). Para autorizar el dominio público del servicio SSR, configura `NG_ALLOWED_HOSTS` con el hostname exacto de Railway, sin protocolo ni puerto (por ejemplo, `mi-app.up.railway.app`).
+
+La URL del backend todavía está fija en `src/app/Services/entrenamientos.ts` (`http://localhost:3000/api/v1/entrenamientos`). Debe cambiarse para producción. No hay configuración de entornos Angular en el proyecto: una variable `BACKEND_URL` configurada en Railway no se inserta automáticamente en el código del navegador; primero hace falta implementar configuración de entorno durante el build o una configuración pública en tiempo de ejecución.
+
+## API
+
+Base local: `http://localhost:3000/api/v1`
+
+| Método | Ruta | Acción |
+| --- | --- | --- |
+| `GET` | `/health` | Comprueba el estado de la API |
+| `GET`, `POST` | `/clientes` | Lista o crea clientes |
+| `GET`, `PUT`, `DELETE` | `/clientes/:id` | Consulta, actualiza o elimina un cliente |
+| `GET`, `POST` | `/entrenamientos` | Lista o crea entrenamientos |
+| `GET`, `PUT`, `PATCH`, `DELETE` | `/entrenamientos/:id` | Consulta, actualiza o elimina un entrenamiento |
+
+Para permitir un origen distinto del frontend, define `FRONT_URL` en `Backend/.env`. Se aceptan varios orígenes separados por comas. El puerto del backend se configura con `PORT` y, si no se define, usa `3000`.
